@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Event List{% endblock %}
+
+{% block content %}
+
+  <h1>Events</h1>
+  <p><a href="{% url 'events_create' %}"><button type="button" class="btn btn-primary">Create Event</button></a></p>
+  <p>Quick Filters:
+    <a href="?"><button type="button" class="btn btn-secondary">All</button></a>
+    <a href="?filter=o"><button type="button" class="btn btn-secondary">Organised</button></a>
+    <a href="?filter=a"><button type="button" class="btn btn-secondary">Attending</button></a>
+    <a href="?filter=p"><button type="button" class="btn btn-secondary">Previous</button></a>
+  </p>
+
+  {% if events %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Organiser</th>
+          <th scope="col">Title</th>
+          <th scope="col">Attendees</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td>{{event.date_time}}</td>
+            <td><a href="mailto:{{ event.organiser.email }}">{{ event.organiser_friendly }}</a></td>
+            <td><a href="{{ event.pk }}">{{event.title}}</a></td>
+            <td>{{event.attendees_count}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  {% if events.has_other_pages %}
+    <ul class="pagination">
+      {% if events.has_previous %}
+        <li><a href="?page={{ events.previous_page_number }}&filter={{ query_filter }}">&laquo;</a></li>
+      {% else %}
+        <li class="disabled"><span>&laquo;</span></li>
+      {% endif %}
+
+      {% for i in events.paginator.page_range %}
+        {% if events.number == i %}
+          <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+        {% else %}
+          <li><a href="?page={{ i }}&filter={{ query_filter }}">{{ i }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if users.has_next %}
+        <li><a href="?page={{ events.next_page_number }}&filter={{ query_filter }}">&raquo;</a></li>
+      {% else %}
+        <li class="disabled"><span>&raquo;</span></li>
+      {% endif %}
+    </ul>
+  {% endif %}
+  {% else %}
+    <p>No events match your filter.</p>
+  {% endif %}
+
+{% endblock %}

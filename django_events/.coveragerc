@@ -1,0 +1,11 @@
+[run]
+include = */django_events/*
+omit =
+    *__init__.py
+    django\settings.py
+    */tests/*
+    */migrations/*
+    *manage.py
+
+[html]
+directory = coverage_html_report

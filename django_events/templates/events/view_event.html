@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'events_list' %}"><button type="button" class="btn btn-primary">Back</button></a>
+
+  <h1>{{ event.title }}</h1>
+  <p>Organiser: {{ event.organiser }}</p>
+  <p>{{ event.description }}</p>
+
+  <h2>Attendees:</h2>
+  {% if event.attendees.all.count %}
+    <ul>
+      {% for attendee in event.attendees.all %}
+      <li>{{ attendee.email }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>There are no attendees.</p>
+  {% endif %}
+
+  <h2>Actions:</h2>
+  {% if user_is_organiser %}
+    <p><a href="{% url 'events_edit' event.pk %}"><button type="button" class="btn btn-primary">Edit Event</button></a>
+  {% elif user_is_attending %}
+    <p><a href="{% url 'events_unattend' event.pk %}"><button type="button" class="btn btn-primary">Unattend</button></a>
+  {% else %}
+    <p><a href="{% url 'events_attend' event.pk %}"><button type="button" class="btn btn-primary">Attend</button></a>
+  {% endif %}
+
+{% endblock %}
