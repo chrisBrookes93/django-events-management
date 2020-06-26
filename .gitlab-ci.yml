@@ -1,0 +1,11 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: python:3
+  script:
+    - pip install coverage django
+    - cd django_events
+    - coverage run manage.py test
+    - coverage report
