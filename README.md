@@ -1,13 +1,15 @@
 # django-events-management
-This repository provides a simple Django application for managing events.
+This repository contains a simple Django application for managing events.
 
-This fulfils the following user stories. As a User I can:
+This fulfils the following user stories. 
+
+As a User I can:
 * Register using my email address & password
 * Login using my email address & password
-* Create an event, providing a title, description and date/time
+* Create an event, providing a title, description & date/time
 * Modify an event if I am the organiser
-* List the events, showing title, date/time, organiser email name, and number of attendees
-* View a specific event, showing title, description, date/time and attendees list
+* List the events, showing title, date/time, organiser email name, & number of attendees
+* View a specific event, showing title, description, date/time & attendees list
 * View a list of events sorted so that upcoming are first
 
 Other non-functional requirements:
@@ -38,26 +40,26 @@ Other non-functional requirements:
 As this is a prototype and is only required to handle requests in the thousands, the following has not yet been implemented:
 * External DB Server
 * Caching Server
-* Customer Templating
+* Custom Templating
 * Lazy String Translation
 
 Key performance features:
 * Code has been written efficiently
-* Optimised lazy-evaluated Query Sets
+* Optimised lazy-evaluated QuerySets
 
 ### Security
-Key performance features:
+Key security features:
 * Each page checks that the user is authenticated and redirects to the login page if not
 * Events can only be modified by the organiser
-* No SQL has been written, instead relying on models for database interact to avoid potential SQL injection attack vectors
+* No SQL has been written, instead relying on Models for database interaction to avoid potential SQL injection attack vectors
 * Developed to run on the latest Django version
 
 ### Deployment
-TBC
+Docker container to follow...
 
 ### Testing
 
-CI Pipeline: https://gitlab.com/chrisBrookes93/django-events-management/-/pipelines
+GitLab CI Pipeline: https://gitlab.com/chrisBrookes93/django-events-management/-/pipelines
 
 Models, Managers and Views have been heavily tested and code coverage is very high. This can be viewed using ```coverage```:
 ```bash
@@ -68,7 +70,25 @@ Ran 49 tests in 5.214s
 
 OK
 
-django_events_management\django_events>coverage html
+django_events_management\django_events>coverage report
+Name                                   Stmts   Miss  Cover
+----------------------------------------------------------
+django_events_management\settings.py      23      0   100%
+django_events_management\urls.py           4      0   100%
+django_events_management\views.py          5      0   100%
+events\admin.py                            6      0   100%
+events\models.py                          27      1    96%
+events\urls.py                             3      0   100%
+events\views.py                           87      0   100%
+users\admin.py                            14      0   100%
+users\forms.py                             6      0   100%
+users\managers.py                         16      1    94%
+users\models.py                           13      0   100%
+users\urls.py                              4      0   100%
+users\views.py                            16      0   100%
+----------------------------------------------------------
+TOTAL                                    224      2    99%
+
 django_events_management\django_events>
 ```
 
@@ -78,4 +98,4 @@ django_events_management\django_events>
 * Archive old events into a separate table/database for database optimisation
 * Deploy static files to a CDN server for performance improvement
 * Migrate from SQLite to MySQL/PostgreSQL for database scalability
-
+* Use a caching server
