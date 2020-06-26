@@ -56,6 +56,9 @@ Key performance features:
 TBC
 
 ### Testing
+
+CI Pipeline: https://gitlab.com/chrisBrookes93/django-events-management/-/pipelines
+
 Models, Managers and Views have been heavily tested and code coverage is very high. This can be viewed using ```coverage```:
 ```bash
 django_events_management\django_events>coverage run manage.py test
@@ -68,7 +71,6 @@ OK
 django_events_management\django_events>coverage html
 django_events_management\django_events>
 ```
-
 
 ## Improvements
 * Make use of front-end JS (AJAX) to dynamically update content on pages
