@@ -1,18 +1,17 @@
-# Docker file borrowed from: https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
+# Use Python 3.8
+FROM python:3.8
 
-FROM python:3.8.3-alpine
+# Prevent Docker from outputting to stdout
+ENV PYTHONBUFFERED 1
 
-# set work directory
-WORKDIR /usr/src/app
+# Make a directory called "code" which will contain the source code. This will be used as a volume in our docker-compose.yml file
+RUN mkdir /code
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Add the contents of the django_events directory to the code directory
+ADD ./django_events /code
 
-# install dependencies
-RUN pip install --upgrade pip
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+# Set the working directory for the container. I.e. all commands will be based out of this directory
+WORKDIR /code
 
-# copy project
-COPY . .
+# Install all dependencies required for this project.
+RUN pip install --trusted-host pypy.org --trusted-host files.pythonhosted.org -r requirements.txt
