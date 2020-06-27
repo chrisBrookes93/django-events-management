@@ -107,7 +107,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static")
 ]
 
-STATIC_ROOT = os.environ.get('STATIC_ROOT')
+STATIC_ROOT = '/static/'
 
 
 LOGIN_REDIRECT_URL = "/"

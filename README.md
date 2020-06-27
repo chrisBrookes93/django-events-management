@@ -57,7 +57,12 @@ Key security features:
 * CSRF Token or Session Cookie will not be served over HTTP
 * Referrer Policy projects the users' privacy
 
+### Development
+Should you wish to use this application in a development context, you will need to set the following environment variables:
+* DEBUG=1
+* SECRET_KEY=[key]
 
+Without these, ``python manage.py runserver`` and ``python manage.py test`` will not work.
 ### Deployment
 This application can be deployed easily using ```docker-compose```.
 
@@ -65,7 +70,6 @@ This application can be deployed easily using ```docker-compose```.
 ~$ mkdir django_evt
 ~$ cd django_evt
 ~/django_evt$ git clone https://github.com/chrisBrookes93/django-events-management.git .
-~/django_evt$ sudo apt install docke rdocker-compose
 ~/django_evt$ sudo docker-compose up --build
 ```
 
