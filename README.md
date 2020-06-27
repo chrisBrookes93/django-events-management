@@ -63,8 +63,12 @@ Key security features:
 Should you wish to use this application in a development context, you will need to set the following environment variables:
 * DEBUG=1
 * SECRET_KEY=[key]
+* ALLOWED_APPS=*
 
 Without these, ``python manage.py runserver`` and ``python manage.py test`` will not work.
+
+These were intentionally not set as defaults to reduce the risk of a production deployment with an unsafe secret key.
+
 ### Deployment
 This application can be deployed easily using ```docker-compose```.
 
