@@ -9,6 +9,7 @@ services:
     volumes:
       - ./code:/src
       - ./config/nginx/certs/:/etc/certs
+      - ./static:/static
     expose:
       - "443"
   nginx:
@@ -19,5 +20,6 @@ services:
       - "80:80"
     volumes:
       - ./config/nginx/:/etc/nginx/conf.d
+      - ./static:/static
     depends_on:
       - web
