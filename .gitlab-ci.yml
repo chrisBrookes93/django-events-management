@@ -7,5 +7,6 @@ test:
   script:
     - pip install coverage django
     - cd django_events
+    - export SECRET_KEY=-%)x^r0ifit+8+uy&slcrhc6_r9q@x^gu0vee$vnmnqzlcdqq@
     - coverage run manage.py test
     - coverage report
