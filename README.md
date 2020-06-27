@@ -49,13 +49,35 @@ Key performance features:
 
 ### Security
 Key security features:
-* Each page checks that the user is authenticated and redirects to the login page if not
+* Each page checks that the user is authenticated
 * Events can only be modified by the organiser
 * No SQL has been written, instead relying on Models for database interaction to avoid potential SQL injection attack vectors
-* Developed to run on the latest Django version
+* Developed to run on the latest Django/Python/NGINX versions
+* Redirect to SSL is enabled
+* CSRF Token or Session Cookie will not be served over HTTP
+* Referrer Policy projects the users' privacy
+
 
 ### Deployment
-Docker container to follow...
+This application can be deployed easily using ```docker-compose```.
+
+```bash
+~$ mkdir django_evt
+~$ cd django_evt
+~/django_evt$ git clone https://github.com/chrisBrookes93/django-events-management.git .
+~/django_evt$ sudo apt install docke rdocker-compose
+~/django_evt$ sudo docker-compose up --build
+```
+
+#### Deployment Checklist:
+* Checkout repository
+* Generate certificates and place in ``/django_events/config/nginx/certs`` (example self-signed ones provided)
+* Set correct values for your environment variables in ``/config/web/web-variables.env``
+* Navigate to: https://0.0.0.0:443/admin. Login with the default admin and **change the password**:
+    * Default Email: *admin@events.com*
+    * Default Password: *EventsEvents*
+* Access the main site via: https://0.0.0.0:443
+
 
 ### Testing
 
@@ -99,3 +121,4 @@ django_events_management\django_events>
 * Deploy static files to a CDN server for performance improvement
 * Migrate from SQLite to MySQL/PostgreSQL for database scalability
 * Use a caching server
+* Improve exception handling & logging
