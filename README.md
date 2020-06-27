@@ -1,4 +1,6 @@
 # django-events-management
+[![Build Status](https://gitlab.com/chrisBrookes93/django-events-management/badges/master/pipeline.svg)](https://gitlab.com/chrisBrookes93/django-events-management)
+
 This repository contains a simple Django application for managing events.
 
 This fulfils the following user stories. 
