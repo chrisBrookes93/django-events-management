@@ -1,7 +1,14 @@
 import os
+import logging
+
+logger = logging.getLogger(__file__)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if not os.environ.get('SECRET_KEY') or not os.environ.get('DEBUG') or not os.environ.get('ALLOWED_HOSTS'):
+    logger.error('Warning: SECRET_KEY, DEBUG and ALLOWED_HOSTS must be set as environment variables. See project '
+                 'documentation for more info! ')
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
