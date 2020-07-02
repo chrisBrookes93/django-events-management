@@ -1,8 +1,7 @@
 import datetime
 from django.db import models
-from django.db.models import Value as V
-from django.db.models import TextField
-from django.db.models import Count
+from django.db.models import Count,  Case, When, BooleanField, TextField, Value as V
+
 from django.db.models.functions import Substr, StrIndex, Cast
 
 from users.models import User
@@ -11,64 +10,42 @@ from users.models import User
 class EventQuerySet(models.QuerySet):
 
     def get_events_organised_by_user(self, user):
-        return \
-            self.filter(organiser=user)\
-                .annotate(attendees_count=Count('attendees'),
-                          organiser_friendly=Cast(
-                              Substr('organiser__email',
-                                     1,
-                                     StrIndex(
-                                         "organiser__email",
-                                         (V("@"))) - 1),
-                              TextField())) \
-                .order_by('date_time')
+        return self.filter(organiser=user)\
+            .annotate(attendees_count=Count('attendees')) \
+            .order_by('date_time')
 
     def get_events_attended_by_user(self, user):
-        return \
-            self.filter(attendees__in=[user]) \
-                .annotate(attendees_count=Count('attendees'),
-                          organiser_friendly=Cast(
-                              Substr('organiser__email',
-                                     1,
-                                     StrIndex(
-                                         "organiser__email",
-                                         (V("@"))) - 1),
-                              TextField())) \
-                .order_by('date_time')
+        return self.filter(attendees__in=[user]) \
+            .annotate(attendees_count=Count('attendees')) \
+            .order_by('date_time')
 
-    def get_current_events(self):
-        return \
-            self.filter(date_time__gte=datetime.datetime.now())\
-                .annotate(attendees_count=Count('attendees'),
-                          organiser_friendly=Cast(
-                              Substr('organiser__email',
-                                     1,
-                                     StrIndex(
-                                         "organiser__email",
-                                         (V("@"))) - 1),
-                              TextField())) \
-                .order_by('date_time')
+    def get_current_events(self, _):
+        return self.filter(date_time__gte=datetime.datetime.now())\
+            .annotate(attendees_count=Count('attendees'))\
+            .order_by('date_time')
 
-    def get_events_in_past(self):
-        return \
-            self.filter(date_time__lte=datetime.datetime.now())\
-                .annotate(attendees_count=Count('attendees'),
-                          organiser_friendly=Cast(
-                              Substr('organiser__email',
-                                     1,
-                                     StrIndex(
-                                         "organiser__email",
-                                         (V("@"))) - 1),
-                              TextField())) \
-                .order_by('date_time')
+    def get_events_in_past(self, _):
+        return self.filter(date_time__lte=datetime.datetime.now())\
+            .annotate(attendees_count=Count('attendees'))\
+            .order_by('date_time')
 
-    def get_event(self, event_id):
+    def get_event(self, event_id, user):
         """
         Return a specific event
 
         :param event_id: ID of the Event
         """
-        return self.get(pk=event_id)
+        return self.filter(pk=event_id)\
+            .annotate(is_organiser=Case(When(organiser=user.id, then=V(True)),
+                                        default=V(False),
+                                        output_field=BooleanField()),
+                      is_attending=Case(When(attendees__id=user.id, then=V(True)),
+                                        default=V(False),
+                                        output_field=BooleanField()),
+                      is_in_past=Case(When(date_time__lt=datetime.datetime.now(), then=V(True)),
+                                      default=V(False),
+                                      output_field=BooleanField()),
+                      attendees_count=Count('attendees')).first()
 
 
 class Event(models.Model):

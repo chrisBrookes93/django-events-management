@@ -7,7 +7,7 @@
   <h1>Events</h1>
   <p><a href="{% url 'events_create' %}"><button type="button" class="btn btn-primary">Create Event</button></a></p>
   <p>Quick Filters:
-    <a href="?"><button type="button" class="btn btn-secondary">All</button></a>
+    <a href="?"><button type="button" class="btn btn-secondary">All Future</button></a>
     <a href="?filter=o"><button type="button" class="btn btn-secondary">Organised</button></a>
     <a href="?filter=a"><button type="button" class="btn btn-secondary">Attending</button></a>
     <a href="?filter=p"><button type="button" class="btn btn-secondary">Previous</button></a>
@@ -27,7 +27,7 @@
         {% for event in events %}
           <tr>
             <td>{{event.date_time}}</td>
-            <td><a href="mailto:{{ event.organiser.email }}">{{ event.organiser_friendly }}</a></td>
+            <td><a href="mailto:{{ event.organiser.email }}">{{ event.organiser.friendly_name }}</a></td>
             <td><a href="{{ event.pk }}">{{event.title}}</a></td>
             <td>{{event.attendees_count}}</td>
           </tr>

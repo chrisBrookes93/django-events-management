@@ -5,7 +5,7 @@ test:
   stage: test
   image: python:3
   script:
-    - pip install coverage django
+    - pip install -r test-requirements.txt
     - export SECRET_KEY=aSecretkeyaSecretkeyaSecretkeyaSecretkeyaSecretkey
     - export DEBUG=0
     - export ALLOWED_HOSTS=*

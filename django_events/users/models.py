@@ -1,8 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
+import re
+
 from .managers import UserManager
 
+EMAIL_FRIENDLY_REGEX = re.compile('(.*)@')
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField('Email Address', unique=True)
@@ -15,3 +18,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super(AbstractBaseUser, cls).from_db(db, field_names, values)
+        matches = re.search(EMAIL_FRIENDLY_REGEX, instance.email)
+        instance.friendly_name = matches.group(1) if matches else instance.email
+        return instance
