@@ -1,0 +1,73 @@
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, action
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN
+
+from events.models import Event, EventQuerySet
+from events.serializers import EventListSerializer, EventDetailSerializer
+from .permissions import IsEventOrganiser
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'events': reverse('event-list', request=request, format=format)
+    })
+
+
+class EventViewSet(ModelViewSet):
+    serializer_class = EventListSerializer
+    permission_classes = [IsAuthenticated, IsEventOrganiser]
+
+    filter_func_lookup = {
+        'o': Event.objects.get_events_organised_by_user,
+        'a': Event.objects.get_events_attended_by_user,
+        'p': Event.objects.get_events_in_past
+    }
+
+    def get_queryset(self):
+        query_filter = self.request.query_params.get('filter', '')
+        filter_func = self.filter_func_lookup.get(query_filter, Event.objects.get_current_events)
+        query_set = filter_func(self.request.user)
+        return query_set
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override the retrieve() so that the EventQuerySet.get_event() is used as this adds annotations that we return
+        in the response
+        """
+        event = Event.objects.get_event(user=self.request.user, **self.kwargs)
+        if not event:
+            return Response(status=HTTP_404_NOT_FOUND)
+        serializer = EventDetailSerializer(event)
+        return Response(serializer.data)
+
+    def perform_create(self, serializer):
+        """
+        Custom override to patch in the organiser as the current user
+        """
+        serializer.save(organiser=self.request.user)
+
+    @action(detail=True, methods=['POST'])
+    def attend(self, request, *args, **kwargs):
+        event = Event.objects.get_event(user=self.request.user, **self.kwargs)
+        if not event:
+            return Response(status=HTTP_404_NOT_FOUND)
+        if event.is_in_past:
+            return Response(status=HTTP_403_FORBIDDEN, data={'detail': 'Cannot attend an event in the past'})
+
+        event.attendees.add(request.user)
+        return Response(status=HTTP_202_ACCEPTED)
+
+    @action(detail=True, methods=['POST'])
+    def unattend(self, request, *args, **kwargs):
+        event = Event.objects.get_event(user=self.request.user, **self.kwargs)
+        if not event:
+            return Response(status=HTTP_404_NOT_FOUND)
+        if event.is_in_past:
+            return Response(status=HTTP_403_FORBIDDEN, data={'detail': 'Cannot unattend an event in the past'})
+
+        event.attendees.remove(request.user)
+        return Response(status=HTTP_202_ACCEPTED)

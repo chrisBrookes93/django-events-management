@@ -7,6 +7,7 @@ from .managers import UserManager
 
 EMAIL_FRIENDLY_REGEX = re.compile('(.*)@')
 
+
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField('Email Address', unique=True)
     date_joined = models.DateTimeField(auto_now_add=True)

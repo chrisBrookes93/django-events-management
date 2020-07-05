@@ -29,13 +29,13 @@ class EventQuerySet(models.QuerySet):
             .annotate(attendees_count=Count('attendees'))\
             .order_by('date_time')
 
-    def get_event(self, event_id, user):
+    def get_event(self, pk, user):
         """
         Return a specific event
 
-        :param event_id: ID of the Event
+        :param pk: ID of the Event
         """
-        return self.filter(pk=event_id)\
+        return self.filter(pk=pk)\
             .annotate(is_organiser=Case(When(organiser=user.id, then=V(True)),
                                         default=V(False),
                                         output_field=BooleanField()),
@@ -57,4 +57,4 @@ class Event(models.Model):
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
-        return '{0}: {1} (organised by: {2})'.format(self.date_time, self.title, self.organiser)
+        return '{0}: {1}'.format(self.date_time, self.title)
