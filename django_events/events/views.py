@@ -1,13 +1,11 @@
-import logging
 from django.shortcuts import render, redirect, reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic import View, TemplateView
+from django.http.response import HttpResponseNotFound, HttpResponseForbidden
 
 from .models import Event
-
-logger = logging.getLogger(__name__)
 
 
 class EventCreate(LoginRequiredMixin, CreateView):
@@ -67,20 +65,16 @@ class EventUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         try:
             event = Event.objects.get(pk=event_id)
             has_permission = self.request.user == event.organiser
-        except Exception as e:
-            logger.error(e)
+        except Event.DoesNotExist:
             has_permission = False
 
-        if not has_permission:
-            logger.error('User %s attempted to modify an event that does not belong to them' % self.request.user)
         return has_permission
 
     def handle_no_permission(self):
         """
         Redirect to viewing the event when the user does not have permission to edit it
         """
-        event_id = self.kwargs.get('pk', 0)
-        return redirect('events_view', event_id=event_id)
+        return HttpResponseForbidden()
 
 
 class AttendEvent(LoginRequiredMixin, TemplateView):
@@ -88,6 +82,8 @@ class AttendEvent(LoginRequiredMixin, TemplateView):
     def post(self, request, pk):
         try:
             event = Event.objects.get_event(pk, request.user)
+            if not event:
+                return HttpResponseNotFound()
             event.attendees.add(request.user)
             event.save()
             return redirect('events_view', pk=pk)
@@ -101,6 +97,8 @@ class UnattendEvent(LoginRequiredMixin, TemplateView):
     def post(self, request, pk):
         try:
             event = Event.objects.get_event(pk, request.user)
+            if not event:
+                return HttpResponseNotFound()
             event.attendees.remove(request.user)
             event.save()
             return redirect('events_view', pk=pk)
@@ -114,6 +112,8 @@ class EventView(LoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         try:
             event = Event.objects.get_event(pk, request.user)
+            if not event:
+                return HttpResponseNotFound()
             return render(request,
                           'events/view_event.html',
                           {'event': event})

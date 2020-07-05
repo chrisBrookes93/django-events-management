@@ -17,12 +17,12 @@ class EventQuerySet(models.QuerySet):
             .annotate(attendees_count=Count('attendees')) \
             .order_by('date_time')
 
-    def get_current_events(self, _):
+    def get_current_events(self, _=None):
         return self.filter(date_time__gte=datetime.datetime.now())\
             .annotate(attendees_count=Count('attendees'))\
             .order_by('date_time')
 
-    def get_events_in_past(self, _):
+    def get_events_in_past(self, _=None):
         return self.filter(date_time__lte=datetime.datetime.now())\
             .annotate(attendees_count=Count('attendees'))\
             .order_by('date_time')

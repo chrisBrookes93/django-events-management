@@ -16,14 +16,14 @@ class TestViewIndex(TestCase):
         cls.user1 = get_user_model().objects.create_user(email='user1@events.com', password='password')
         cls.request_factory = RequestFactory()
 
-    def test__view_index__authenticated(self):
+    def test_view_index_authenticated(self):
         request = self.request_factory.get(reverse('index'))
         request.user = self.user1
         response = view_index(request)
         self.assertEqual(response.status_code, TestViewIndex.HTTP_REDIRECT)
-        self.assertEqual(response.url, '/events/')
+        self.assertEqual(response.url, reverse('events_list'))
 
-    def test__view_index__not_authenticated(self):
+    def test_view_index_not_authenticated(self):
         request = self.request_factory.get(reverse('index'))
         request.user = AnonymousUser()
         response = view_index(request)

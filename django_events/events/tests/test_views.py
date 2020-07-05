@@ -3,12 +3,15 @@ from django.test import TestCase, RequestFactory
 from django.shortcuts import reverse
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 
-from ..views import EventCreate, EventUpdate, view_event_attend, view_event_list, view_event_view, view_event_unattend
-from ..models import Event
+from events.views import EventCreate, EventUpdate, EventList, UnattendEvent, AttendEvent, EventView
+from events.models import Event
 
 HTTP_OK = 200
 HTTP_REDIRECT = 302
+HTTP_NOT_FOUND = 404
+HTTP_FORBIDDEN = 403
 
 
 class TestEventCreate(TestCase):
@@ -18,27 +21,27 @@ class TestEventCreate(TestCase):
         cls.request_factory = RequestFactory()
         cls.user1 = get_user_model().objects.create_user(email='user1@events.com', password='password')
 
-    def test__event_create__not_authenticated(self):
+    def test_event_create_not_authenticated(self):
         request = self.request_factory.post(reverse('events_create'))
         request.user = AnonymousUser()
         response = EventCreate.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertIn('login', response.url)
+        self.assertIn(reverse('user_login'), response.url)
 
-    def test__event_create__invalid_form(self):
+    def test_event_create_invalid_form(self):
         request = self.request_factory.post(reverse('events_create'))
         request.user = self.user1
         response = EventCreate.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertTrue(response.context_data['form'].errors)
 
-    def test__event_create__not_post(self):
+    def test_event_create_not_post(self):
         request = self.request_factory.get(reverse('events_create'))
         request.user = self.user1
         response = EventCreate.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
 
-    def test__event_create__valid_form(self):
+    def test_event_create_valid_form(self):
         request = self.request_factory.post(reverse('events_create'), data={'title': 'event 1',
                                                                             'description': 'event one',
                                                                             'date_time': '2020-06-26 01:01:12'})
@@ -60,37 +63,31 @@ class TestEventUpdate(TestCase):
                                           date_time=datetime.now(),
                                           organiser=cls.user1)
 
-    def test__event_update__not_authenticated(self):
+    def test_event_update_not_authenticated(self):
         request = self.request_factory.post(reverse('events_edit', kwargs={'pk': self.event1.id}))
         request.user = AnonymousUser()
         response = EventUpdate.as_view()(request, *[], **{'pk': self.event1.id})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        expected_url = '/events/' + str(self.event1.id)
-        self.assertEqual(expected_url, response.url)
+        self.assertEqual(response.status_code, HTTP_FORBIDDEN)
 
-    def test__event_update__not_permitted(self):
+    def test_event_update_not_permitted(self):
         request = self.request_factory.post(reverse('events_edit', kwargs={'pk': self.event1.id}))
         request.user = self.user2
         response = EventUpdate.as_view()(request, *[], **{'pk': self.event1.id})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        expected_url = '/events/' + str(self.event1.id)
-        self.assertEqual(expected_url, response.url)
+        self.assertEqual(response.status_code, HTTP_FORBIDDEN)
 
-    def test__event_update__invalid_event(self):
+    def test_event_update_invalid_event(self):
         request = self.request_factory.post(reverse('events_edit', kwargs={'pk': 99999}))
         request.user = self.user2
         response = EventUpdate.as_view()(request, *[], **{'pk': 99999})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        expected_url = '/events/' + str(99999)
-        self.assertEqual(expected_url, response.url)
+        self.assertEqual(response.status_code, HTTP_FORBIDDEN)
 
-    def test__event_update__not_post(self):
+    def test_event_update_not_post(self):
         request = self.request_factory.get(reverse('events_edit', kwargs={'pk': self.event1.id}))
         request.user = self.user1
         response = EventUpdate.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_OK)
 
-    def test__event_update__valid_form(self):
+    def test_event_update_valid_form(self):
         request = self.request_factory.post(
             reverse('events_edit', kwargs={'pk': self.event1.id}),
             data={'title': '#event 1',
@@ -99,7 +96,7 @@ class TestEventUpdate(TestCase):
         request.user = self.user1
         response = EventUpdate.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertRegexpMatches(response.url, '/events/[\\d]+')
+        self.assertRegexpMatches(response.url, reverse('events_view', args=(self.event1.id,)))
 
 
 class TestViewEventAttend(TestCase):
@@ -114,26 +111,25 @@ class TestViewEventAttend(TestCase):
                                           date_time=datetime.now(),
                                           organiser=cls.user1)
 
-    def test__view_event_attend__not_authenticated(self):
-        request = self.request_factory.post(reverse('events_attend', kwargs={'event_id': self.event1.id}))
+    def test_view_event_attend_not_authenticated(self):
+        request = self.request_factory.post(reverse('events_attend', kwargs={'pk': self.event1.id}))
         request.user = AnonymousUser()
-        response = view_event_attend(request, *[], **{'event_id': self.event1.id})
+        response = AttendEvent.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
         self.assertIn('login', response.url)
 
-    def test__view_event_attend__invalid_event(self):
-        request = self.request_factory.post(reverse('events_attend', kwargs={'event_id': 9999}))
+    def test_view_event_attend_invalid_event(self):
+        request = self.request_factory.post(reverse('events_attend', kwargs={'pk': 9999}))
         request.user = self.user1
-        response = view_event_attend(request, *[], **{'event_id': 9999})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertEqual('/events/', response.url)
+        response = AttendEvent.as_view()(request, *[], **{'pk': 9999})
+        self.assertEqual(response.status_code, HTTP_NOT_FOUND)
 
-    def test__view_event_attend__correct_case(self):
-        request = self.request_factory.post(reverse('events_attend', kwargs={'event_id': self.event1.id}))
+    def test_view_event_attend_correct_case(self):
+        request = self.request_factory.post(reverse('events_attend', kwargs={'pk': self.event1.id}))
         request.user = self.user1
-        response = view_event_attend(request, *[], **{'event_id': self.event1.id})
+        response = AttendEvent.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertEqual('/events/' + str(self.event1.id), response.url)
+        self.assertEqual(reverse('events_view', args=(self.event1.id,)), response.url)
 
 
 class TestViewEventUnattend(TestCase):
@@ -150,26 +146,25 @@ class TestViewEventUnattend(TestCase):
         cls.event1.attendees.add(cls.user1)
         cls.event1.save()
 
-    def test__view_event_unattend__not_authenticated(self):
-        request = self.request_factory.post(reverse('events_unattend', kwargs={'event_id': self.event1.id}))
+    def test_view_event_unattend_not_authenticated(self):
+        request = self.request_factory.post(reverse('events_unattend', kwargs={'pk': self.event1.id}))
         request.user = AnonymousUser()
-        response = view_event_unattend(request, *[], **{'event_id': self.event1.id})
+        response = UnattendEvent.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
         self.assertIn('login', response.url)
 
-    def test__view_event_unattend__invalid_event(self):
-        request = self.request_factory.post(reverse('events_unattend', kwargs={'event_id': 9999}))
+    def test_view_event_unattend_invalid_event(self):
+        request = self.request_factory.post(reverse('events_unattend', kwargs={'pk': 9999}))
         request.user = self.user1
-        response = view_event_unattend(request, *[], **{'event_id': 9999})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertEqual('/events/', response.url)
+        response = UnattendEvent.as_view()(request, *[], **{'pk': 9999})
+        self.assertEqual(response.status_code, HTTP_NOT_FOUND)
 
-    def test__view_event_unattend__correct_case(self):
-        request = self.request_factory.post(reverse('events_unattend', kwargs={'event_id': self.event1.id}))
+    def test_view_event_unattend_correct_case(self):
+        request = self.request_factory.post(reverse('events_unattend', kwargs={'pk': self.event1.id}))
         request.user = self.user1
-        response = view_event_unattend(request, *[], **{'event_id': self.event1.id})
+        response = UnattendEvent.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertEqual('/events/' + str(self.event1.id), response.url)
+        self.assertEqual(reverse('events_view', args=(self.event1.id,)), response.url)
 
 
 class TestViewEventView(TestCase):
@@ -186,24 +181,23 @@ class TestViewEventView(TestCase):
         cls.event1.attendees.add(cls.user1)
         cls.event1.save()
 
-    def test__view_event_view__not_authenticated(self):
-        request = self.request_factory.post(reverse('events_view', kwargs={'event_id': self.event1.id}))
+    def test_view_event_view_not_authenticated(self):
+        request = self.request_factory.get(reverse('events_view', kwargs={'pk': self.event1.id}))
         request.user = AnonymousUser()
-        response = view_event_view(request, *[], **{'event_id': self.event1.id})
+        response = EventView.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
         self.assertIn('login', response.url)
 
-    def test__view_event_view__invalid_event(self):
-        request = self.request_factory.post(reverse('events_view', kwargs={'event_id': 9999}))
+    def test_view_event_view_invalid_event(self):
+        request = self.request_factory.get(reverse('events_view', kwargs={'pk': 9999}))
         request.user = self.user1
-        response = view_event_view(request, *[], **{'event_id': 9999})
-        self.assertEqual(response.status_code, HTTP_REDIRECT)
-        self.assertEqual('/events/', response.url)
+        response = EventView.as_view()(request, *[], **{'pk': 9999})
+        self.assertEqual(response.status_code, HTTP_NOT_FOUND)
 
-    def test__view_event_view__correct_case(self):
-        request = self.request_factory.post(reverse('events_view', kwargs={'event_id': self.event1.id}))
+    def test_view_event_view_correct_case(self):
+        request = self.request_factory.get(reverse('events_view', kwargs={'pk': self.event1.id}))
         request.user = self.user1
-        response = view_event_view(request, *[], **{'event_id': self.event1.id})
+        response = EventView.as_view()(request, *[], **{'pk': self.event1.id})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.event1.description, response.content.decode())
 
@@ -235,52 +229,52 @@ class TestViewEventList(TestCase):
                                                  date_time=datetime.now() - timedelta(hours=4),
                                                  organiser=cls.user1)
 
-    def test__view_event_list__not_authenticated(self):
+    def test_view_event_list_not_authenticated(self):
         request = self.request_factory.get(reverse('events_list'))
         request.user = AnonymousUser()
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_REDIRECT)
         self.assertIn('login', response.url)
 
-    def test__view_event_list__all(self):
+    def test_view_event_list_all(self):
         request = self.request_factory.get(reverse('events_list'))
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.organised_event.title, response.content.decode())
         self.assertInHTML(self.attending_event.title, response.content.decode())
 
-    def test__view_event_list__organised(self):
+    def test_view_event_list_organised(self):
         request = self.request_factory.get(reverse('events_list'), data={'filter': 'o'})
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.organised_event.title, response.content.decode())
 
-    def test__view_event_list__attending(self):
+    def test_view_event_list_attending(self):
         request = self.request_factory.get(reverse('events_list'), data={'filter': 'a'})
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.attending_event.title, response.content.decode())
 
-    def test__view_event_list__past(self):
+    def test_view_event_list_past(self):
         request = self.request_factory.get(reverse('events_list'), data={'filter': 'p'})
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.expired_event.title, response.content.decode())
 
-    def test__view_event_list__page_not_int(self):
+    def test_view_event_list_page_not_int(self):
         request = self.request_factory.get(reverse('events_list'), data={'page': 'pageOne', 'filter': 'a'})
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.attending_event.title, response.content.decode())
 
-    def test__view_event_list__page_empty(self):
+    def test_view_event_list_page_empty(self):
         request = self.request_factory.get(reverse('events_list'), data={'page': 999, 'filter': 'a'})
         request.user = self.user1
-        response = view_event_list(request, *[], **{})
+        response = EventList.as_view()(request, *[], **{})
         self.assertEqual(response.status_code, HTTP_OK)
         self.assertInHTML(self.attending_event.title, response.content.decode())
