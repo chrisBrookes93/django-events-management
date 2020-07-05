@@ -10,7 +10,7 @@ class BaseEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ['title', 'description', 'date_time', 'organiser_friendly_name', 'organiser', 'url']
+        fields = ['id', 'title', 'description', 'date_time', 'organiser_friendly_name', 'organiser', 'url']
 
 
 class EventListSerializer(BaseEventSerializer):
@@ -18,7 +18,7 @@ class EventListSerializer(BaseEventSerializer):
 
     class Meta:
         model = Event
-        fields = ['title', 'description', 'date_time', 'attendees_count', 'organiser_friendly_name', 'organiser', 'url']
+        fields = ['id', 'title', 'description', 'date_time', 'attendees_count', 'organiser_friendly_name', 'organiser', 'url']
 
 
 class EventDetailSerializer(EventListSerializer):
@@ -30,5 +30,5 @@ class EventDetailSerializer(EventListSerializer):
 
     class Meta:
         model = Event
-        fields = ['title', 'description', 'date_time', 'organiser_friendly_name', 'organiser', 'attendees',
+        fields = ['id', 'title', 'description', 'date_time', 'organiser_friendly_name', 'organiser', 'attendees',
                   'is_organiser', 'is_in_past', 'is_attending']

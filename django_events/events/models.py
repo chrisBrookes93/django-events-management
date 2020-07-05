@@ -1,8 +1,6 @@
 import datetime
 from django.db import models
-from django.db.models import Count,  Case, When, BooleanField, TextField, Value as V
-
-from django.db.models.functions import Substr, StrIndex, Cast
+from django.db.models import Count,  Case, When, BooleanField, Value as V
 
 from users.models import User
 

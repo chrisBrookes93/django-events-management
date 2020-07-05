@@ -20,15 +20,21 @@
     <p>There are no attendees.</p>
   {% endif %}
 
-  {% if not event.is_in_past %}
     <h2>Actions:</h2>
     {% if event.is_organiser %}
-      <p><a href="{% url 'events_edit' event.pk %}"><button type="button" class="btn btn-primary">Edit Event</button></a>
-    {% elif event.is_attending %}
-      <p><a href="{% url 'events_unattend' event.pk %}"><button type="button" class="btn btn-primary">Unattend</button></a>
-    {% else %}
-      <p><a href="{% url 'events_attend' event.pk %}"><button type="button" class="btn btn-primary">Attend</button></a>
-    {% endif %}
-  {% endif %}
+        <p><a href="{% url 'events_edit' event.pk %}"><button type="button" class="btn btn-primary">Edit Event</button></a>
+    {% elif not event.is_in_past %}
+        {% if event.is_attending %}
+           <form method="POST" action="{% url 'events_unattend' event.pk %}">
+              {% csrf_token %}
+              <p><button type="submit" class="btn btn-primary">Unattend</button></p>
+           </form>
+        {% else %}
+           <form method="POST" action="{% url 'events_attend' event.pk %}">
+              {% csrf_token %}
+              <p><button type="submit" class="btn btn-primary">Attend</button></p>
+           </form>
+        {% endif %}
+    {% endif %} 
 
 {% endblock %}

@@ -1,10 +1,9 @@
 import logging
 from django.shortcuts import render, redirect, reverse
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic.edit import CreateView, UpdateView
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 
 from .models import Event
 
@@ -84,48 +83,37 @@ class EventUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return redirect('events_view', event_id=event_id)
 
 
-@login_required()
-def view_event_attend(request, event_id):
-    """
-    View to attend an event
+class AttendEvent(LoginRequiredMixin, TemplateView):
 
-    :param request: Request
-    :param event_id: ID of the event (PK)
-    """
-    try:
-        event = Event.objects.get_event(event_id, request.user)
-        event.attendees.add(request.user)
-        event.save()
-        return redirect('events_view', event_id=event_id)
-    except Exception as e:
-        logger.error(e)
-        return redirect('events_list')
+    def post(self, request, pk):
+        try:
+            event = Event.objects.get_event(pk, request.user)
+            event.attendees.add(request.user)
+            event.save()
+            return redirect('events_view', pk=pk)
+        except Exception as e:
+            logger.error(e)
+            return redirect('events_list')
 
 
-@login_required()
-def view_event_unattend(request, event_id):
-    """
-    View to unattend an event
+class UnattendEvent(LoginRequiredMixin, TemplateView):
 
-    :param request: Request
-    :param event_id: ID of the event (PK)
-    """
-    try:
-        event = Event.objects.get_event(event_id, request.user)
-        event.attendees.remove(request.user)
-        event.save()
-        return redirect('events_view', event_id=event_id)
-
-    except Exception as e:
-        logger.error(e)
-        return redirect('events_list')
+    def post(self, request, pk):
+        try:
+            event = Event.objects.get_event(pk, request.user)
+            event.attendees.remove(request.user)
+            event.save()
+            return redirect('events_view', pk=pk)
+        except Exception as e:
+            logger.error(e)
+            return redirect('events_list')
 
 
 class EventView(LoginRequiredMixin, View):
 
-    def get(self, request, event_id, *args, **kwargs):
+    def get(self, request, pk, *args, **kwargs):
         try:
-            event = Event.objects.get_event(event_id, request.user)
+            event = Event.objects.get_event(pk, request.user)
             return render(request,
                           'events/view_event.html',
                           {'event': event})
@@ -140,29 +128,26 @@ FILTER_FUNC_TABLE = {
     'p': Event.objects.get_events_in_past
 }
 
-@login_required
-def view_event_list(request):
-    """
-    View to list events
 
-    :param request: Request
-    """
-    query_filter = request.GET.get('filter')
-    filter_func = FILTER_FUNC_TABLE.get(query_filter, Event.objects.get_current_events)
-    query_set = filter_func(request.user)
+class EventList(LoginRequiredMixin, TemplateView):
 
-    page = request.GET.get('page', 1)
-    paginator = Paginator(query_set, 10)
-    try:
-        event_list = paginator.page(page)
-    except PageNotAnInteger:
-        event_list = paginator.page(1)
-    except EmptyPage:
-        event_list = paginator.page(paginator.num_pages)
+    def get(self, request,  *args, **kwargs):
+        query_filter = request.GET.get('filter')
+        filter_func = FILTER_FUNC_TABLE.get(query_filter, Event.objects.get_current_events)
+        query_set = filter_func(request.user)
 
-    return render(request,
-                  'events/list_events.html',
-                  {
-                      'events': event_list,
-                      'query_filter': query_filter
-                  })
+        page = request.GET.get('page', 1)
+        paginator = Paginator(query_set, 10)
+        try:
+            event_list = paginator.page(page)
+        except PageNotAnInteger:
+            event_list = paginator.page(1)
+        except EmptyPage:
+            event_list = paginator.page(paginator.num_pages)
+
+        return render(request,
+                      'events/list_events.html',
+                      {
+                          'events': event_list,
+                          'query_filter': query_filter
+                      })
