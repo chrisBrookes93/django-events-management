@@ -7,7 +7,15 @@ from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_403_FORB
 
 from events.models import Event
 
-date_time_obj = datetime.strptime('18/09/25 01:55:19', '%d/%m/%y %H:%M:%S')
+
+def get_url(view_name, args=None):
+    """
+    Convenient wrapper around reverse() and ensures that the path's have a trailing slash to avoid a 301 status code
+    """
+    url = reverse(view_name, args=args)
+    if not url.endswith('/'):
+        url += '/'
+    return url
 
 
 class TestApi(TestCase):
@@ -50,7 +58,7 @@ class TestApi(TestCase):
         self.user1_client.force_authenticate(user=self.user1)
 
     def test_event_list(self):
-        response = self.user1_client.get(reverse('event-list'), {}, format='json')
+        response = self.user1_client.get(get_url('event-list'), {}, format='json')
         self.assertEqual(response.status_code, HTTP_200_OK)
         data = response.data
         self.assertEqual(len(data.get('results')), 3)
@@ -81,11 +89,11 @@ class TestApi(TestCase):
         self.assertDictEqual(dict(actual_evt2), expected_evt2)
 
     def test_event_detail_invalid_event(self):
-        response = self.user1_client.get(reverse('event-detail', args=(8458546, )), {}, format='json')
+        response = self.user1_client.get(get_url('event-detail', args=(8458546, )), {}, format='json')
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
 
     def test_event_detail_correct(self):
-        response = self.user1_client.get(reverse('event-detail', args=(self.organised_event.id, )), {}, format='json')
+        response = self.user1_client.get(get_url('event-detail', args=(self.organised_event.id, )), {}, format='json')
         self.assertEqual(response.status_code, HTTP_200_OK)
 
         actual = response.data
@@ -102,32 +110,32 @@ class TestApi(TestCase):
         self.assertDictEqual(actual, expected)
 
     def test_attend_invalid_event(self):
-        response = self.user1_client.post(reverse('event-attend', args=(7686867876876867,)), {}, format='json')
+        response = self.user1_client.post(get_url('event-attend', args=(7686867876876867,)), {}, format='json')
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
 
     def test_attend_event_in_past(self):
-        response = self.user1_client.post(reverse('event-attend', args=(self.expired_event.id,)), {}, format='json')
+        response = self.user1_client.post(get_url('event-attend', args=(self.expired_event.id,)), {}, format='json')
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
     def test_attend_event_correct(self):
-        response = self.user1_client.post(reverse('event-attend', args=(self.not_attending_event.id,)), {}, format='json')
+        response = self.user1_client.post(get_url('event-attend', args=(self.not_attending_event.id,)), {}, format='json')
         self.assertEqual(response.status_code, HTTP_202_ACCEPTED)
 
     def test_unattend_invalid_event(self):
-        response = self.user1_client.post(reverse('event-unattend', args=(7686867876876867,)), {}, format='json')
+        response = self.user1_client.post(get_url('event-unattend', args=(7686867876876867,)), {}, format='json')
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
 
     def test_unattend_event_in_past(self):
-        response = self.user1_client.post(reverse('event-unattend', args=(self.expired_event.id,)), {}, format='json')
+        response = self.user1_client.post(get_url('event-unattend', args=(self.expired_event.id,)), {}, format='json')
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
     def test_unattend_event_correct(self):
-        response = self.user1_client.post(reverse('event-unattend', args=(self.attending_event.id,)), {},
+        response = self.user1_client.post(get_url('event-unattend', args=(self.attending_event.id,)), {},
                                           format='json')
         self.assertEqual(response.status_code, HTTP_202_ACCEPTED)
 
     def test_update_not_organiser(self):
-        response = self.user1_client.put(reverse('event-detail', args=(self.attending_event.id,)),
+        response = self.user1_client.put(get_url('event-detail', args=(self.attending_event.id,)),
                                          {'date_time': '2020-07-08T00:41:51.746287',
                                           'title': 'title',
                                           'description': 'description'},
