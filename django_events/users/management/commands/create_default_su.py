@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 
 class Command(BaseCommand):
     help = "Creates a default super user if one doesn't already exist. " \
-           "This is designed to be user in the docker-compose.yml to create an initial super user on deployment."
+           "This is designed to be used in the docker-compose.yml to create an initial super user on deployment."
 
     def handle(self, *args, **kwargs):
         """

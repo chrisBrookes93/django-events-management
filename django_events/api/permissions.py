@@ -7,8 +7,7 @@ class IsEventOrganiser(BasePermission):
         """
         Custom permission check to only allow the event organiser to make changes to an event
         """
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
+        # Any user is allowed to view the event, so allow all safe methods
         if request.method in SAFE_METHODS:
             return True
 

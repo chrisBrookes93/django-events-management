@@ -18,12 +18,13 @@ class EventListSerializer(BaseEventSerializer):
 
     class Meta:
         model = Event
-        fields = ['id', 'title', 'description', 'date_time', 'attendees_count', 'organiser_friendly_name', 'organiser', 'url']
+        fields = ['id', 'title', 'description', 'date_time', 'attendees_count', 'organiser_friendly_name', 'organiser',
+                  'url']
 
 
 class EventDetailSerializer(EventListSerializer):
     attendees = UserSerializer(many=True, read_only=True)
-    # These fields are not part of the model but are annotations added by EvenyQuerySet.get_event()
+    # These fields are not part of the model definition but are annotations added by EvenyQuerySet.get_event()
     is_organiser = serializers.BooleanField(read_only=True)
     is_in_past = serializers.BooleanField(read_only=True)
     is_attending = serializers.BooleanField(read_only=True)

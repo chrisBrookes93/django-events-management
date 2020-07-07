@@ -22,6 +22,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @classmethod
     def from_db(cls, db, field_names, values):
+        """
+        Override to set a friendly name attribute on the instance. This is the first part of the email address (before
+        the '@')
+        """
         instance = super(AbstractBaseUser, cls).from_db(db, field_names, values)
         matches = re.search(EMAIL_FRIENDLY_REGEX, instance.email)
         instance.friendly_name = matches.group(1) if matches else instance.email

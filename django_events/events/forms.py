@@ -2,10 +2,8 @@ from django import forms
 from .models import Event
 
 
-class EventCreationForm(forms.Form):
+class EventForm(forms.ModelForm):
 
-    class Meta(forms.Form):
+    class Meta:
         model = Event
-        fields = ['title', 'description', 'date_time', 'date_time']
-
-
+        fields = ['title', 'description', 'date_time']

@@ -140,6 +140,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
     'PAGE_SIZE': 30,
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        # There's no formal requirement for a public API, so on the least privilege principle, only allow access via
+        # session authentication (to allow the AJAX to make requests)
         'rest_framework.authentication.SessionAuthentication',
     ]
 }

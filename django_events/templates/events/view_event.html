@@ -4,59 +4,117 @@
 
 {% block content %}
   <script type="text/javascript">
-      $(document).ready(function(){
-          $('.btn-attendance').on('click', function(event) {
-              const csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
-              $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
-                  jqXHR.setRequestHeader('X-CSRFToken', csrftoken);
-              });
 
-              $.ajax({
-                url: window.location.origin + "{{ attendance_url }}",
-                dataType: 'json',
-                type: 'POST',
-                error: function(data) {
-                  alert(data.responseText);
-                },
-                success: function(data) {
-                   location.reload();
-                }
-              });
+      function mark_attendance(url_postfix)
+      {
+          $.ajax({
+            url: window.location.origin + url_postfix,
+            dataType: 'json',
+            type: 'POST',
+            error: function(data) {
+              $('#event-body').empty();
+              $('#event-body').append("<h1>Error: "+data.responseText+"</h1>");
+            },
+            success: function(data) {
+               refresh_event_data();
+            }
           });
+      }
+
+      function refresh_event_data()
+      {
+        $.ajax({
+            url: window.location.origin + "{% url 'event-detail' pk %}",
+            dataType: 'json',
+            type: 'GET',
+            error: function(data) {
+              $('#event-body').empty();
+              $('#event-body').append("<h1>"+data.responseText+"</h1>");
+            },
+            success: function(data) {
+               render_event(data);
+            }
+          });
+      }
+
+      function render_event(event)
+      {
+         $('#event-title').replaceWith(event.title);
+         $('#event-date').replaceWith(event.date_time);
+         $('#event-organiser').replaceWith("<a href='mailto:"+event.organiser+"'>"+event.organiser_friendly_name+"</a>");
+         $('#event-description').replaceWith(event.description);
+
+         var attendeeDiv = $('#event-attendees');
+         attendeeDiv.empty();
+         if (event.attendees.length)
+         {
+           attendeeDiv.append("<ul>");
+           for (var i=0; i<event.attendees.length; i++)
+           {
+              var currAttendee = event.attendees[i];
+              attendeeDiv.append("<li><a href='"+currAttendee.email+"'>"+currAttendee.friendly_name+"</a></li>");
+           }
+           attendeeDiv.append("</ul>");
+         }
+         else
+         {
+            attendeeDiv.append("<p>There are no attendees.</p>");
+         }
+
+         $('#event-actions').empty();
+         if (event.is_organiser)
+         {
+            $('#event-actions').append("<p><a href='{% url 'events_edit' pk %}'><button type='button' class='btn btn-primary'>Edit Event</button></a>");
+         }
+         else
+         {
+            if (!event.is_in_past){
+                if (event.is_attending)
+                {
+                   $('#event-actions').append("<p><button type='button' class='btn btn-primary btn-unattend'>Unattend</button></p>");
+                   $('.btn-unattend').on('click', function(event) {
+                       mark_attendance("{% url 'event-unattend' pk %}")
+                   });
+                }
+                else
+                {
+                   $('#event-actions').append("<p><button type='button' class='btn btn-primary btn-attend'>Attend</button></p>");
+                       $('.btn-attend').on('click', function(event) {
+                       mark_attendance("{% url 'event-attend' pk %}")
+                   });
+                }
+            }
+         }
+      }
+
+      $(document).ready(function(){
+         const csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+         $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+            jqXHR.setRequestHeader('X-CSRFToken', csrftoken);
+         });
+         refresh_event_data();
       });
 
   </script>
 
   <p><a href="{% url 'events_list' %}"><button type="button" class="btn btn-primary">Back</button></a>
 
-  <h1>{{ event.title }}</h1>
-  <h4>Organiser: {{ event.organiser.friendly_name }}</h4>
-  <h4>Date: {{ event.date_time }}</h4>
+  <div id="event-body">
+
+  <h1><span id="event-title"></span></h1>
+  <h4>Organiser: <span id="event-organiser"></span></h4>
+  <h4>Date: <span id="event-date"></span></h4>
 
   <h3>Description:</h3>
-  <p>{{ event.description }}</p>
+  <p id="event-description"></p>
 
   <h2>Attendees:</h2>
-  {% if event.attendees.exists %}
-    <ul>
-      {% for attendee in event.attendees.all %}
-        <li><a href="mailto:{{ attendee.email }}">{{ attendee.friendly_name }}</a></li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>There are no attendees.</p>
-  {% endif %}
+  <div id="event-attendees"></div>
 
-    <h2>Actions:</h2>
-    {% if event.is_organiser %}
-        <p><a href="{% url 'events_edit' event.pk %}"><button type="button" class="btn btn-primary">Edit Event</button></a>
-    {% elif not event.is_in_past %}
-        {% csrf_token %}
-        {% if event.is_attending %}
-              <p><button type="button" class="btn btn-primary btn-attendance">Unattend</button></p>
-        {% else %}
-              <p><button type="button" class="btn btn-primary btn-attendance">Attend</button></p>
-        {% endif %}
-    {% endif %}
+  <h2>Actions:</h2>
+  {% csrf_token %}
+
+  <div id="event-actions"></div>
+  </div>
 
 {% endblock %}
