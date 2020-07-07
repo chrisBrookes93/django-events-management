@@ -58,7 +58,7 @@ class TestApi(TestCase):
         self.user1_client.force_authenticate(user=self.user1)
 
     def test_event_list(self):
-        response = self.user1_client.get(get_url('event-list'), {}, format='json')
+        response = self.user1_client.get('/api/event/', {}, format='json')
         self.assertEqual(response.status_code, HTTP_200_OK)
         data = response.data
         self.assertEqual(len(data.get('results')), 3)
