@@ -89,11 +89,11 @@ class TestApi(TestCase):
         self.assertDictEqual(dict(actual_evt2), expected_evt2)
 
     def test_event_detail_invalid_event(self):
-        response = self.user1_client.get(get_url('event-detail', args=(8458546, )), {}, format='json')
+        response = self.user1_client.get(get_url('event-detail', args=(8458546, )), {}, format='json', secure=True)
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
 
     def test_event_detail_correct(self):
-        response = self.user1_client.get(get_url('event-detail', args=(self.organised_event.id, )), {}, format='json')
+        response = self.user1_client.get(get_url('event-detail', args=(self.organised_event.id, )), {}, format='json', secure=False)
         self.assertEqual(response.status_code, HTTP_200_OK)
 
         actual = response.data
