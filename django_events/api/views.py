@@ -51,15 +51,15 @@ class EventViewSet(ModelViewSet):
         serializer.save(organiser=self.request.user)
 
     @action(detail=True, methods=['POST'])
-    def attend(self, request, *args, **kwargs):
-        event = Event.objects.get_event(user=self.request.user, **self.kwargs)
+    def attend(self, request, pk, *args, **kwargs):
+        event = Event.objects.get_event(pk=pk, user=self.request.user)
         if not event:
             return Response(status=HTTP_404_NOT_FOUND)
         if event.is_in_past:
             return Response(status=HTTP_403_FORBIDDEN, data={'detail': 'Cannot attend an event in the past'})
 
         event.attendees.add(request.user)
-        return Response(status=HTTP_202_ACCEPTED)
+        return Response(status=HTTP_202_ACCEPTED, data={'detail': 'Successfully attended'})
 
     @action(detail=True, methods=['POST'])
     def unattend(self, request, *args, **kwargs):
@@ -70,4 +70,4 @@ class EventViewSet(ModelViewSet):
             return Response(status=HTTP_403_FORBIDDEN, data={'detail': 'Cannot unattend an event in the past'})
 
         event.attendees.remove(request.user)
-        return Response(status=HTTP_202_ACCEPTED)
+        return Response(status=HTTP_202_ACCEPTED, data={'detail': 'Successfully unattended'})

@@ -3,6 +3,30 @@
 {% block title %}{{ event.title }}{% endblock %}
 
 {% block content %}
+  <script type="text/javascript">
+      $(document).ready(function(){
+          $('.btn-attendance').on('click', function(event) {
+              const csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+              $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+                  jqXHR.setRequestHeader('X-CSRFToken', csrftoken);
+              });
+
+              $.ajax({
+                url: window.location.origin + "{{ attendance_url }}",
+                dataType: 'json',
+                type: 'POST',
+                error: function(data) {
+                  alert(data.responseText);
+                },
+                success: function(data) {
+                   location.reload();
+                }
+              });
+          });
+      });
+
+  </script>
+
   <p><a href="{% url 'events_list' %}"><button type="button" class="btn btn-primary">Back</button></a>
 
   <h1>{{ event.title }}</h1>
@@ -27,16 +51,11 @@
     {% if event.is_organiser %}
         <p><a href="{% url 'events_edit' event.pk %}"><button type="button" class="btn btn-primary">Edit Event</button></a>
     {% elif not event.is_in_past %}
+        {% csrf_token %}
         {% if event.is_attending %}
-           <form method="POST" action="{% url 'events_unattend' event.pk %}">
-              {% csrf_token %}
-              <p><button type="submit" class="btn btn-primary">Unattend</button></p>
-           </form>
+              <p><button type="button" class="btn btn-primary btn-attendance">Unattend</button></p>
         {% else %}
-           <form method="POST" action="{% url 'events_attend' event.pk %}">
-              {% csrf_token %}
-              <p><button type="submit" class="btn btn-primary">Attend</button></p>
-           </form>
+              <p><button type="button" class="btn btn-primary btn-attendance">Attend</button></p>
         {% endif %}
     {% endif %}
 

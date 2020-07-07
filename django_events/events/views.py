@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect, reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -6,6 +7,8 @@ from django.views.generic import View, TemplateView
 from django.http.response import HttpResponseNotFound, HttpResponseForbidden
 
 from .models import Event
+
+logger = logging.getLogger(__name__)
 
 
 class EventCreate(LoginRequiredMixin, CreateView):
@@ -77,36 +80,6 @@ class EventUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return HttpResponseForbidden()
 
 
-class AttendEvent(LoginRequiredMixin, TemplateView):
-
-    def post(self, request, pk):
-        try:
-            event = Event.objects.get_event(pk, request.user)
-            if not event:
-                return HttpResponseNotFound()
-            event.attendees.add(request.user)
-            event.save()
-            return redirect('events_view', pk=pk)
-        except Exception as e:
-            logger.error(e)
-            return redirect('events_list')
-
-
-class UnattendEvent(LoginRequiredMixin, TemplateView):
-
-    def post(self, request, pk):
-        try:
-            event = Event.objects.get_event(pk, request.user)
-            if not event:
-                return HttpResponseNotFound()
-            event.attendees.remove(request.user)
-            event.save()
-            return redirect('events_view', pk=pk)
-        except Exception as e:
-            logger.error(e)
-            return redirect('events_list')
-
-
 class EventView(LoginRequiredMixin, View):
 
     def get(self, request, pk, *args, **kwargs):
@@ -114,9 +87,16 @@ class EventView(LoginRequiredMixin, View):
             event = Event.objects.get_event(pk, request.user)
             if not event:
                 return HttpResponseNotFound()
+
+            if event.is_attending:
+                attendance_url = reverse('event-unattend', args=(event.id,))
+            else:
+                attendance_url = reverse('event-attend', args=(event.id,))
+
             return render(request,
                           'events/view_event.html',
-                          {'event': event})
+                          {'event': event,
+                           'attendance_url': attendance_url})
         except Exception as e:
             logger.error(e)
             return redirect('events_list')

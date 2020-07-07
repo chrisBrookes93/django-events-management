@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserSerializer
-from .models import Event, EventQuerySet
+from .models import Event
 
 
 class BaseEventSerializer(serializers.ModelSerializer):

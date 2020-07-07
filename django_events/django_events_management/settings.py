@@ -126,8 +126,10 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(';')
 
 if not DEBUG:
     CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = True
+    CSRF_COOKIE_HTTPONLY = True
+    CSRF_USE_SESSIONS = True
     SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -136,5 +138,8 @@ if not DEBUG:
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
-    'PAGE_SIZE': 30
+    'PAGE_SIZE': 30,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ]
 }
