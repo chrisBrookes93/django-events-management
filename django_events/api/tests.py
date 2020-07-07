@@ -60,7 +60,7 @@ class TestApi(TestCase):
                          'attendees_count': 1,
                          'organiser_friendly_name': 'user1',
                          'organiser': 'user1@events.com',
-                         'url': 'http://testserver/api/event/1/'}
+                         'url': 'https://testserver/api/event/1/'}
         actual_evt1 = data['results'][0]
         actual_evt1['url'] = str(actual_evt1['url'])
         self.assertDictEqual(dict(actual_evt1), expected_evt1)
@@ -72,7 +72,7 @@ class TestApi(TestCase):
                          'attendees_count': 1,
                          'organiser_friendly_name': 'user2',
                          'organiser': 'user2@events.com',
-                         'url': 'http://testserver/api/event/2/'}
+                         'url': 'https://testserver/api/event/2/'}
         actual_evt2 = data['results'][1]
         actual_evt2['url'] = str(actual_evt2['url'])
 
